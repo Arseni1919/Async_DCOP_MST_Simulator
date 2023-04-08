@@ -14,6 +14,7 @@ class AsyncDcopMstEnv:
         self.agents, self.agents_dict = [], {}
         self.targets, self.targets_dict = [], {}
         self.step_count = 0
+        self.mailbox = {}
 
         # for rendering
         # self.fig, self.ax = plt.subplots(2, 2, figsize=(12, 8))
@@ -54,6 +55,12 @@ class AsyncDcopMstEnv:
         # step count
         self.step_count = 0
 
+        # mailbox
+        self.mailbox = {
+            agent.name: {i: [] for i in range(self.max_steps)}
+            for agent in self.agents
+        }
+
     def get_observations(self):
         observations = {
             agent.name: {
@@ -75,13 +82,50 @@ class AsyncDcopMstEnv:
         }
         return observations
 
+    def execute_move_order(self, agent, move_order):
+        # TODO: to insert move duration
+        """
+        MOVE ORDER: 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
+        """
+        x = agent.pos.x
+        y = agent.pos.y
+        if move_order == 1:
+            y += 1
+        elif move_order == 2:
+            x += 1
+        elif move_order == 3:
+            y -= 1
+        elif move_order == 4:
+            x -= 1
+        elif move_order == 0:
+            pass
+        else:
+            raise RuntimeError('wrong move order')
+
+        new_pos_name = f'{x}_{y}'
+        if new_pos_name in self.nodes_dict:
+            new_pos = self.nodes_dict[new_pos_name]
+            agent.goto(new_pos)
+
+    def execute_send_order(self, send_order):
+        """
+        SEND ORDER: message -> [(from, to, content), ...]
+        """
+        for from_a_name, to_a_name, content in send_order:
+            time_to_arrive = min(self.max_steps - 1, self.step_count + 1 + random.randint(0, 3))
+            self.mailbox[to_a_name][time_to_arrive].append((from_a_name, content))
+
     def step(self, actions):
-        # TODO
         """
         ACTION:
-            MOVE_ORDER: 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
-            SEND_ORDER: message -> (from, to, content)
+            MOVE ORDER: 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
+            SEND ORDER: message -> [(from, to, content), ...]
         """
+        for agent in self.agents:
+            move_order = actions[agent.name]['move']
+            send_order = actions[agent.name]['send']
+            self.execute_move_order(agent, move_order)
+            self.execute_send_order(send_order)
         self.step_count += 1
 
     def render(self, info):
@@ -102,7 +146,17 @@ class AsyncDcopMstEnv:
         pass
 
     def sample_actions(self, observations):
-        actions = {}
+        """
+        ACTION:
+            MOVE ORDER: 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
+            SEND ORDER: message -> [(from, to, content), ...]
+        """
+        actions = {agent.name: {
+            'move': random.randint(0, 4),
+            'send': []
+        }
+            for agent in self.agents
+        }
         return actions
 
 

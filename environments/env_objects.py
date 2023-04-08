@@ -62,9 +62,11 @@ class SimAgent:
         self.cred = cred
         self.sr = sr
         self.mr = mr
+
         self.pos = pos
         self.start_pos = self.pos
         self.prev_pos = pos
+
         self.is_broken = False
         self.broken_pos = None
         self.broken_time = -1
@@ -77,6 +79,11 @@ class SimAgent:
         self.is_broken = False
         self.broken_pos = None
         self.broken_time = -1
+
+    def goto(self, new_pos):
+        self.prev_pos = self.pos
+        self.pos = new_pos
+
 
     def get_broken(self, pos, t):
         if not self.is_broken:
