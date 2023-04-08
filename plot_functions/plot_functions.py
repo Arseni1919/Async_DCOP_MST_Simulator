@@ -28,6 +28,7 @@ def plot_algs_rewards(ax, info):
 
 
 def plot_async_mst_field(ax, info):
+    ax.cla()
     info = AttributeDict(info)
     # field_np = np.zeros((self.height, self.width))
     field_np = np.zeros((info.width, info.height))
@@ -67,3 +68,4 @@ def plot_async_mst_field(ax, info):
 
     ax.set_ylim(0, info.width)
     ax.set_xlim(0, info.height)
+    ax.set_title(f'prob: {info.i_problem}, iter: {info.i_time}')

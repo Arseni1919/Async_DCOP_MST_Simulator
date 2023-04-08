@@ -44,6 +44,7 @@ class AsyncDcopMstEnv:
         print()
 
     def reset(self):
+        # TODO
         # reset agents
         pass
 
@@ -51,25 +52,27 @@ class AsyncDcopMstEnv:
         pass
 
     def get_observations(self):
+        # TODO
         observations = {}
         return observations
 
     def step(self, actions):
+        # TODO
         pass
 
     def render(self, info):
-        info = {
+        info.update({
             'width': self.width,
             'height': self.height,
             'nodes': self.nodes,
             'targets': self.targets,
             'agents': self.agents,
-        }
+        })
 
         plot_async_mst_field(self.ax['A'], info)
 
-        # plt.pause(0.001)
-        plt.show()
+        plt.pause(0.001)
+        # plt.show()
 
     def close(self):
         pass
@@ -81,7 +84,7 @@ class AsyncDcopMstEnv:
 
 def main():
     max_steps = 120
-    problems = 1
+    n_problems = 3
 
     info = {}
 
@@ -98,7 +101,7 @@ def main():
         map_dir=map_dir,
     )
 
-    for i_problem in range(problems):
+    for i_problem in range(n_problems):
         env.create_new_problem(path='../maps', n_agents=n_agents, n_targets=n_targets)
 
         # loop on algs
@@ -119,6 +122,8 @@ def main():
             pass
 
             # render
+            info['i_problem'] = i_problem
+            info['i_time'] = i_time
             env.render(info)
 
 
