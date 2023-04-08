@@ -61,8 +61,6 @@ class AsyncAgent:
         return choice, messages
 
 
-
-
 class AsyncDCOP:
     def __init__(self, max_steps=120, n_agents=None, domain_size=None, constraints_type=None):
         self.max_steps = max_steps
