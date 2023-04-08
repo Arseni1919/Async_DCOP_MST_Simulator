@@ -52,6 +52,9 @@ class SimTarget:
 
         self.name = f'target_{self.num}'
 
+    def reset(self):
+        pass
+
 
 class SimAgent:
     def __init__(self, num, cred=20, sr=10, mr=1, pos=None):

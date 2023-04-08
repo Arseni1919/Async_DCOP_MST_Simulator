@@ -13,6 +13,7 @@ class AsyncDcopMstEnv:
         self.map_np, self.height, self.width, self.nodes, self.nodes_dict = None, None, None, None, None
         self.agents, self.agents_dict = [], {}
         self.targets, self.targets_dict = [], {}
+        self.step_count = 0
 
         # for rendering
         # self.fig, self.ax = plt.subplots(2, 2, figsize=(12, 8))
@@ -44,21 +45,44 @@ class AsyncDcopMstEnv:
         print()
 
     def reset(self):
-        # TODO
         # reset agents
-        pass
+        _ = [agent.reset() for agent in self.agents]
 
         # reset targets
-        pass
+        _ = [target.reset() for target in self.targets]
+
+        # step count
+        self.step_count = 0
 
     def get_observations(self):
-        # TODO
-        observations = {}
+        observations = {
+            agent.name: {
+                'cred': agent.cred,
+                'sr': agent.sr,
+                'mr': agent.mr,
+                'pos': agent.pos,
+                'start_pos': agent.start_pos,
+                'prev_pos': agent.prev_pos,
+                'is_broken': agent.is_broken,
+                'broken_pos': agent.broken_pos,
+                'broken_time': agent.broken_time,
+                'step_count': self.step_count,
+                'nei_targets': [],  # TODO
+                'nei_agents': [],  # TODO
+                'new_messages': None,  # TODO
+            }
+            for agent in self.agents
+        }
         return observations
 
     def step(self, actions):
         # TODO
-        pass
+        """
+        ACTION:
+            MOVE_ORDER: 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
+            SEND_ORDER: message -> (from, to, content)
+        """
+        self.step_count += 1
 
     def render(self, info):
         info.update({
