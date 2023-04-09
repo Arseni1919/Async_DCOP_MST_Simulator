@@ -65,7 +65,11 @@ class SimAgent:
 
         self.pos = pos
         self.start_pos = self.pos
-        self.prev_pos = pos
+        self.prev_pos = None
+        self.next_pos = None
+
+        self.is_moving = False
+        self.arrival_time = None
 
         self.is_broken = False
         self.broken_pos = None
@@ -76,14 +80,22 @@ class SimAgent:
     def reset(self):
         self.pos = self.start_pos
         self.prev_pos = self.start_pos
+        self.next_pos = None
+        self.arrival_time = -1
         self.is_broken = False
         self.broken_pos = None
         self.broken_time = -1
 
-    def goto(self, new_pos):
-        self.prev_pos = self.pos
-        self.pos = new_pos
+    def set_next_pos_and_time(self, next_pos, arrival_time):
+        self.next_pos = next_pos
+        self.arrival_time = arrival_time
 
+    def go_to_next_pos(self):
+        if self.next_pos is None:
+            raise RuntimeError('next_pos is None')
+        self.prev_pos = self.pos
+        self.pos = self.next_pos
+        self.next_pos = None
 
     def get_broken(self, pos, t):
         if not self.is_broken:

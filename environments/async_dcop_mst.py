@@ -10,11 +10,13 @@ class AsyncDcopMstEnv:
         self.max_steps = max_steps
         self.map_dir = map_dir
         self.name = 'AsyncDcopMstEnv'
+        # create_new_problem
         self.map_np, self.height, self.width, self.nodes, self.nodes_dict = None, None, None, None, None
-        self.agents, self.agents_dict = [], {}
-        self.targets, self.targets_dict = [], {}
-        self.step_count = 0
-        self.mailbox = {}
+        self.agents, self.agents_dict = None, None
+        self.targets, self.targets_dict = None, None
+        # reset
+        self.step_count = None
+        self.mailbox = None
 
         # for rendering
         # self.fig, self.ax = plt.subplots(2, 2, figsize=(12, 8))
@@ -23,6 +25,8 @@ class AsyncDcopMstEnv:
     def create_new_problem(self, path='maps', n_agents=2, n_targets=2):
         self.map_np, (self.height, self.width) = get_np_from_dot_map(self.map_dir, path=path)
         self.nodes, self.nodes_dict = build_graph_from_np(self.map_np, show_map=False)
+        self.agents, self.agents_dict = [], {}
+        self.targets, self.targets_dict = [], {}
         positions_pool = random.sample(self.nodes, n_agents + n_targets)
 
         # create agents
@@ -70,13 +74,15 @@ class AsyncDcopMstEnv:
                 'pos': agent.pos,
                 'start_pos': agent.start_pos,
                 'prev_pos': agent.prev_pos,
+                'next_pos': agent.next_pos,
+                'is_moving': agent.is_moving,
                 'is_broken': agent.is_broken,
                 'broken_pos': agent.broken_pos,
                 'broken_time': agent.broken_time,
                 'step_count': self.step_count,
                 'nei_targets': [],  # TODO
                 'nei_agents': [],  # TODO
-                'new_messages': None,  # TODO
+                'new_messages': self.mailbox[agent.name][self.step_count],
             }
             for agent in self.agents
         }
@@ -85,8 +91,23 @@ class AsyncDcopMstEnv:
     def execute_move_order(self, agent, move_order):
         # TODO: to insert move duration
         """
-        MOVE ORDER: 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
+        MOVE ORDER: -1 - wait, 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
         """
+        # --- arrived ---
+        if self.step_count == agent.arrival_time:
+            agent.is_moving = False
+            agent.go_to_next_pos()
+
+        # --- still moving ---
+        if agent.is_moving:
+            return False
+
+        # --- if not moving... ---
+        # idle
+        if move_order == 0:
+            return True
+
+        # new pos
         x = agent.pos.x
         y = agent.pos.y
         if move_order == 1:
@@ -97,28 +118,30 @@ class AsyncDcopMstEnv:
             y -= 1
         elif move_order == 4:
             x -= 1
-        elif move_order == 0:
-            pass
         else:
             raise RuntimeError('wrong move order')
 
         new_pos_name = f'{x}_{y}'
         if new_pos_name in self.nodes_dict:
             new_pos = self.nodes_dict[new_pos_name]
-            agent.goto(new_pos)
+            arrival_time = random.randint(1, 3)
+            time_to_arrive = self.step_count + arrival_time
+            agent.set_next_pos_and_time(next_pos=new_pos, arrival_time=time_to_arrive)
 
     def execute_send_order(self, send_order):
         """
         SEND ORDER: message -> [(from, to, content), ...]
         """
         for from_a_name, to_a_name, content in send_order:
-            time_to_arrive = min(self.max_steps - 1, self.step_count + 1 + random.randint(0, 3))
-            self.mailbox[to_a_name][time_to_arrive].append((from_a_name, content))
+            # time_to_arrive = min(self.max_steps - 1, self.step_count + 1 + random.randint(0, 3))
+            time_to_arrive = self.step_count + 1 + random.randint(0, 3)
+            if time_to_arrive < self.max_steps:
+                self.mailbox[to_a_name][time_to_arrive].append((from_a_name, content))
 
     def step(self, actions):
         """
         ACTION:
-            MOVE ORDER: 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
+            MOVE ORDER: -1 - wait, 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
             SEND ORDER: message -> [(from, to, content), ...]
         """
         for agent in self.agents:
@@ -129,18 +152,20 @@ class AsyncDcopMstEnv:
         self.step_count += 1
 
     def render(self, info):
-        info.update({
-            'width': self.width,
-            'height': self.height,
-            'nodes': self.nodes,
-            'targets': self.targets,
-            'agents': self.agents,
-        })
+        info = AttributeDict(info)
+        if info.i_time % info.plot_every == 0:
+            info.update({
+                'width': self.width,
+                'height': self.height,
+                'nodes': self.nodes,
+                'targets': self.targets,
+                'agents': self.agents,
+            })
 
-        plot_async_mst_field(self.ax['A'], info)
+            plot_async_mst_field(self.ax['A'], info)
 
-        plt.pause(0.001)
-        # plt.show()
+            plt.pause(0.001)
+            # plt.show()
 
     def close(self):
         pass
@@ -148,7 +173,7 @@ class AsyncDcopMstEnv:
     def sample_actions(self, observations):
         """
         ACTION:
-            MOVE ORDER: 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
+            MOVE ORDER: -1 - wait, 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
             SEND ORDER: message -> [(from, to, content), ...]
         """
         actions = {agent.name: {
@@ -163,8 +188,9 @@ class AsyncDcopMstEnv:
 def main():
     max_steps = 120
     n_problems = 3
+    plot_every = 10
 
-    info = {}
+    info = {'plot_every': plot_every}
 
     # map_dir = 'empty-48-48.map'  # 48-48
     # map_dir = 'random-64-64-10.map'  # 64-64
@@ -203,7 +229,6 @@ def main():
             info['i_problem'] = i_problem
             info['i_time'] = i_time
             env.render(info)
-
 
 
 if __name__ == '__main__':
