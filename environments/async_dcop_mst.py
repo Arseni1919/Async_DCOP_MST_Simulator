@@ -55,6 +55,7 @@ class AsyncDcopMstEnv:
 
         # reset targets
         _ = [target.reset() for target in self.targets]
+        _ = [target.update_temp_req(self.agents) for target in self.targets]
 
         # step count
         self.step_count = 0
@@ -81,6 +82,7 @@ class AsyncDcopMstEnv:
                     'num': target.num,
                     'pos': target.pos,
                     'req': target.req,
+                    'temp_req': target.temp_req,
                 })
         return nei_targets
 
@@ -98,6 +100,7 @@ class AsyncDcopMstEnv:
     def get_observations(self):
         observations = {
             agent.name: {
+                'step_count': self.step_count,
                 'cred': agent.cred,
                 'sr': agent.sr,
                 'mr': agent.mr,
@@ -109,7 +112,6 @@ class AsyncDcopMstEnv:
                 'is_broken': agent.is_broken,
                 'broken_pos': agent.broken_pos,
                 'broken_time': agent.broken_time,
-                'step_count': self.step_count,
                 'nei_targets': self.get_nei_targets(agent),
                 'nei_agents': self.get_nei_agents(agent),
                 'new_messages': self.mailbox[agent.name][self.step_count],
@@ -178,11 +180,16 @@ class AsyncDcopMstEnv:
             MOVE ORDER: -1 - wait, 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
             SEND ORDER: message -> [(from, to, content), ...]
         """
+        # move agents + send messages
         for agent in self.agents:
             move_order = actions[agent.name]['move']
             send_order = actions[agent.name]['send']
             self.execute_move_order(agent, move_order)
             self.execute_send_order(send_order)
+
+        # update targets' data
+        _ = [target.update_temp_req(self.agents) for target in self.targets]
+
         self.step_count += 1
 
     def render(self, info):

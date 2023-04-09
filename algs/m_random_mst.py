@@ -1,23 +1,11 @@
 from globals import *
 from algs.test_mst_alg import test_mst_alg
+from algs.alg_objects import *
 
 
-class RandomMstAlgAgent:
+class RandomMstAlgAgent(AlgAgent):
     def __init__(self, sim_agent):
-        self.num = sim_agent.num
-        self.name = sim_agent.name
-        self.cred = sim_agent.cred
-        self.sr = sim_agent.sr
-        self.mr = sim_agent.mr
-
-        self.pos = sim_agent.pos
-        self.start_pos = sim_agent.start_pos
-        self.prev_pos = None
-        self.next_pos = None
-        self.is_moving = False
-        self.is_broken = False
-        self.broken_pos = None
-        self.broken_time = -1
+        super(RandomMstAlgAgent, self).__init__(sim_agent)
 
 
 class RandomMstAlg:

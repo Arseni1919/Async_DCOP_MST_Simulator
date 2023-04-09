@@ -1,6 +1,10 @@
 from globals import *
 
 
+def distance_nodes(node1, node2):
+    return np.sqrt((node1.x - node2.x) ** 2 + (node1.y - node2.y) ** 2)
+
+
 class Node:
     def __init__(self, x, y, t=0, neighbours=None, new_ID=None):
         if new_ID:
@@ -47,10 +51,18 @@ class SimTarget:
         self.num = num
         self.pos = pos
         self.req = req
+        self.temp_req = req
         self.life_start = life_start
         self.life_end = life_end
 
         self.name = f'target_{self.num}'
+
+    def update_temp_req(self, agents):
+        temp_req = self.req
+        for agent in agents:
+            if distance_nodes(self.pos, agent.pos) <= agent.sr:
+                temp_req = max(0, temp_req - agent.cred)
+        self.temp_req = temp_req
 
     def reset(self):
         pass
