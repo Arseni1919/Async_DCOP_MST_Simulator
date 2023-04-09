@@ -17,3 +17,26 @@ class AlgAgent:
         self.is_broken = False
         self.broken_pos = None
         self.broken_time = -1
+
+        self.step_count = None
+        self.nei_targets = None
+        self.nei_agents = None
+        self.mailbox = {}
+
+    def observe(self, observation):
+        observation = AttributeDict(observation)
+        self.step_count = observation.step_count
+        self.cred = observation.cred
+        self.sr = observation.sr
+        self.mr = observation.mr
+        self.pos = observation.pos
+        self.start_pos = observation.start_pos
+        self.prev_pos = observation.prev_pos
+        self.next_pos = observation.next_pos
+        self.is_moving = observation.is_moving
+        self.is_broken = observation.is_broken
+        self.broken_pos = observation.broken_pos
+        self.broken_time = observation.broken_time
+        self.nei_targets = observation.nei_targets
+        self.nei_agents = observation.nei_agents
+        self.mailbox[self.step_count] = observation.new_messages

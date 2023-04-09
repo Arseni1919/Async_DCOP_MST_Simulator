@@ -58,12 +58,10 @@ class DsaMstAlgAgent(AlgAgent):
 
     def process(self, observation):
         # TODO
-        observation = AttributeDict(observation)
-
+        self.observe(observation)
         move_order = self.get_move_order()
         send_order = self.get_send_order()
         return move_order, send_order
-
 
 
 class DsaMstAlg:
@@ -94,7 +92,7 @@ class DsaMstAlg:
 
 def main():
     alg = DsaMstAlg()
-    test_mst_alg(alg)
+    test_mst_alg(alg, to_render=False)
 
 
 if __name__ == '__main__':

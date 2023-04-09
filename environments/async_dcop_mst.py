@@ -6,9 +6,10 @@ from plot_functions.plot_functions import *
 
 
 class AsyncDcopMstEnv:
-    def __init__(self, max_steps, map_dir):
+    def __init__(self, max_steps, map_dir, to_render=True):
         self.max_steps = max_steps
         self.map_dir = map_dir
+        self.to_render = to_render
         self.name = 'AsyncDcopMstEnv'
         # create_new_problem
         self.map_np, self.height, self.width, self.nodes, self.nodes_dict = None, None, None, None, None
@@ -20,7 +21,8 @@ class AsyncDcopMstEnv:
 
         # for rendering
         # self.fig, self.ax = plt.subplots(2, 2, figsize=(12, 8))
-        self.fig, self.ax = plt.subplot_mosaic("AAB;AAC;AAD", figsize=(12, 8))
+        if self.to_render:
+            self.fig, self.ax = plt.subplot_mosaic("AAB;AAC;AAD", figsize=(12, 8))
 
     def create_new_problem(self, path='maps', n_agents=2, n_targets=2):
         self.map_np, (self.height, self.width) = get_np_from_dot_map(self.map_dir, path=path)
@@ -193,20 +195,21 @@ class AsyncDcopMstEnv:
         self.step_count += 1
 
     def render(self, info):
-        info = AttributeDict(info)
-        if info.i_time % info.plot_every == 0:
-            info.update({
-                'width': self.width,
-                'height': self.height,
-                'nodes': self.nodes,
-                'targets': self.targets,
-                'agents': self.agents,
-            })
+        if self.to_render:
+            info = AttributeDict(info)
+            if info.i_time % info.plot_every == 0:
+                info.update({
+                    'width': self.width,
+                    'height': self.height,
+                    'nodes': self.nodes,
+                    'targets': self.targets,
+                    'agents': self.agents,
+                })
 
-            plot_async_mst_field(self.ax['A'], info)
+                plot_async_mst_field(self.ax['A'], info)
 
-            plt.pause(0.001)
-            # plt.show()
+                plt.pause(0.001)
+                # plt.show()
 
     def close(self):
         pass

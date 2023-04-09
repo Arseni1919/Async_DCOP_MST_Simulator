@@ -1,7 +1,7 @@
 from environments.async_dcop_mst import AsyncDcopMstEnv
 
 
-def test_mst_alg(alg):
+def test_mst_alg(alg, to_render=True):
     max_steps = 120
     n_problems = 3
     plot_every = 10
@@ -19,6 +19,7 @@ def test_mst_alg(alg):
     env = AsyncDcopMstEnv(
         max_steps=max_steps,
         map_dir=map_dir,
+        to_render=to_render,
     )
 
     for i_problem in range(n_problems):
@@ -50,7 +51,8 @@ def test_mst_alg(alg):
             # from alg
             alg_info = alg.get_info()
             info.update(alg_info)
-            env.render(info)
+            if to_render:
+                env.render(info)
 
 
 def main():
