@@ -20,6 +20,16 @@ Distributed Search with Mobile Sensor Teams.
 
 ![](pics/standard_mgm.png)
 
+### Algorithms For DCOP_MST
+
+- Random
+- DSA_MST
+- CADSA
+- DSSA
+- Max-sum_MST
+- Max-sum_MST with breakdowns
+- CAMS
+
 ## Credits
 
 - []()
