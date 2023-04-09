@@ -58,7 +58,7 @@ def plot_async_mst_field(ax, info):
         agents_x.append(agent.pos.x)
         agents_y.append(agent.pos.y)
         agents_area.append(agent.sr)
-        circle1 = plt.Circle((agent.pos.x, agent.pos.y), agent.sr, color='blue', alpha=0.2)
+        circle1 = plt.Circle((agent.pos.x, agent.pos.y), agent.sr, color='blue', alpha=0.1)
         # circle1 = plt.Circle((agent.pos.y, agent.pos.x), agent.sr, color='blue', alpha=0.2)
         ax.add_patch(circle1)
     ax.scatter(agents_x, agents_y, marker='o', s=14, color='blue')

@@ -65,6 +65,36 @@ class AsyncDcopMstEnv:
             for agent in self.agents
         }
 
+    def get_nei_targets(self, agent):
+        def is_close(t):
+            for next_pos_name in agent.pos.neighbours:
+                next_pos = self.nodes_dict[next_pos_name]
+                if distance_nodes(next_pos, t.pos) <= agent.sr:
+                    return True
+            return False
+
+        nei_targets = []
+        for target in self.targets:
+            if is_close(target):
+                nei_targets.append({
+                    'name': target.name,
+                    'num': target.num,
+                    'pos': target.pos,
+                    'req': target.req,
+                })
+        return nei_targets
+
+    def get_nei_agents(self, agent):
+        nei_agents = []
+        for other_agent in self.agents:
+            if distance_nodes(agent.pos, other_agent.pos) <= agent.sr + agent.mr + other_agent.sr + other_agent.mr:
+                nei_agents.append({
+                    'name': other_agent.name,
+                    'num': other_agent.num,
+                    'pos': other_agent.pos,
+                })
+        return nei_agents
+
     def get_observations(self):
         observations = {
             agent.name: {
@@ -80,8 +110,8 @@ class AsyncDcopMstEnv:
                 'broken_pos': agent.broken_pos,
                 'broken_time': agent.broken_time,
                 'step_count': self.step_count,
-                'nei_targets': [],  # TODO
-                'nei_agents': [],  # TODO
+                'nei_targets': self.get_nei_targets(agent),
+                'nei_agents': self.get_nei_agents(agent),
                 'new_messages': self.mailbox[agent.name][self.step_count],
             }
             for agent in self.agents
@@ -89,10 +119,13 @@ class AsyncDcopMstEnv:
         return observations
 
     def execute_move_order(self, agent, move_order):
-        # TODO: to insert move duration
         """
         MOVE ORDER: -1 - wait, 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
         """
+        # --- broken ---
+        if agent.is_broken:
+            return False
+
         # --- arrived ---
         if self.step_count == agent.arrival_time:
             agent.is_moving = False
@@ -102,7 +135,7 @@ class AsyncDcopMstEnv:
         if agent.is_moving:
             return False
 
-        # --- if not moving... ---
+        # --- if not moving and not broken... ---
         # idle
         if move_order == 0:
             return True
@@ -125,8 +158,9 @@ class AsyncDcopMstEnv:
         if new_pos_name in self.nodes_dict:
             new_pos = self.nodes_dict[new_pos_name]
             arrival_time = random.randint(1, 3)
-            time_to_arrive = self.step_count + arrival_time
+            time_to_arrive = self.step_count + arrival_time  # takes time to make a movement
             agent.set_next_pos_and_time(next_pos=new_pos, arrival_time=time_to_arrive)
+        return True
 
     def execute_send_order(self, send_order):
         """
