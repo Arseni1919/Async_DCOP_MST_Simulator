@@ -21,6 +21,7 @@ class Node:
         else:
             self.neighbours = neighbours
         # self.neighbours = neighbours
+        self.actions_dict = {}
 
         self.h = 0
         self.g = t
@@ -44,6 +45,29 @@ class Node:
             self.g_dict = {target_node.xy_name: 0 for target_node in target_nodes}
         else:
             self.g_dict = {}
+
+    def init_actions(self, nodes_dict):
+        # idle
+        self.actions_dict[0] = self
+
+        # new pos
+        x = self.x
+        y = self.y
+        new_pos_name = f'{x}_{y + 1}'
+        if new_pos_name in nodes_dict:
+            self.actions_dict[1] = nodes_dict[new_pos_name]
+
+        new_pos_name = f'{x + 1}_{y}'
+        if new_pos_name in nodes_dict:
+            self.actions_dict[2] = nodes_dict[new_pos_name]
+
+        new_pos_name = f'{x}_{y - 1}'
+        if new_pos_name in nodes_dict:
+            self.actions_dict[3] = nodes_dict[new_pos_name]
+
+        new_pos_name = f'{x - 1}_{y}'
+        if new_pos_name in nodes_dict:
+            self.actions_dict[4] = nodes_dict[new_pos_name]
 
 
 class SimTarget:

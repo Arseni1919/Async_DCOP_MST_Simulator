@@ -1,10 +1,13 @@
 from environments.async_dcop_mst import AsyncDcopMstEnv
 
 
-def test_mst_alg(alg, to_render=True):
-    max_steps = 120
-    n_problems = 3
-    plot_every = 10
+def test_mst_alg(alg,
+                 n_agents=10,
+                 n_targets=10,
+                 max_steps=120,
+                 n_problems=3,
+                 to_render=True,
+                 plot_every=10):
 
     info = {'plot_every': plot_every}
 
@@ -12,9 +15,6 @@ def test_mst_alg(alg, to_render=True):
     # map_dir = 'random-64-64-10.map'  # 64-64
     map_dir = 'warehouse-10-20-10-2-1.map'  # 63-161
     # map_dir = 'lt_gallowstemplar_n.map'  # 180-251
-
-    n_agents = 10
-    n_targets = 10
 
     env = AsyncDcopMstEnv(
         max_steps=max_steps,

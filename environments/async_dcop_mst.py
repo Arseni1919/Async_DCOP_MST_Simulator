@@ -91,17 +91,19 @@ class AsyncDcopMstEnv:
     def get_nei_agents(self, agent):
         nei_agents = []
         for other_agent in self.agents:
-            if distance_nodes(agent.pos, other_agent.pos) <= agent.sr + agent.mr + other_agent.sr + other_agent.mr:
-                nei_agents.append({
-                    'name': other_agent.name,
-                    'num': other_agent.num,
-                    'pos': other_agent.pos,
-                })
+            if agent.name != other_agent.name:
+                if distance_nodes(agent.pos, other_agent.pos) <= agent.sr + agent.mr + other_agent.sr + other_agent.mr:
+                    nei_agents.append({
+                        'name': other_agent.name,
+                        'num': other_agent.num,
+                        'pos': other_agent.pos,
+                    })
         return nei_agents
 
     def get_observations(self):
         observations = {
             agent.name: {
+                'name': agent.name,
                 'step_count': self.step_count,
                 'cred': agent.cred,
                 'sr': agent.sr,
@@ -145,22 +147,8 @@ class AsyncDcopMstEnv:
             return True
 
         # new pos
-        x = agent.pos.x
-        y = agent.pos.y
-        if move_order == 1:
-            y += 1
-        elif move_order == 2:
-            x += 1
-        elif move_order == 3:
-            y -= 1
-        elif move_order == 4:
-            x -= 1
-        else:
-            raise RuntimeError('wrong move order')
-
-        new_pos_name = f'{x}_{y}'
-        if new_pos_name in self.nodes_dict:
-            new_pos = self.nodes_dict[new_pos_name]
+        if move_order in agent.pos.actions_dict:
+            new_pos = agent.pos.actions_dict[move_order]
             arrival_time = random.randint(1, 3)
             time_to_arrive = self.step_count + arrival_time  # takes time to make a movement
             agent.set_next_pos_and_time(next_pos=new_pos, arrival_time=time_to_arrive)
@@ -168,19 +156,19 @@ class AsyncDcopMstEnv:
 
     def execute_send_order(self, send_order):
         """
-        SEND ORDER: message -> [(from, to, content), ...]
+        SEND ORDER: message -> [(from, to, s_time, content), ...]
         """
-        for from_a_name, to_a_name, content in send_order:
+        for from_a_name, to_a_name, s_time, content in send_order:
             # time_to_arrive = min(self.max_steps - 1, self.step_count + 1 + random.randint(0, 3))
             time_to_arrive = self.step_count + 1 + random.randint(0, 3)
             if time_to_arrive < self.max_steps:
-                self.mailbox[to_a_name][time_to_arrive].append((from_a_name, content))
+                self.mailbox[to_a_name][time_to_arrive].append((from_a_name, s_time, content))
 
     def step(self, actions):
         """
         ACTION:
             MOVE ORDER: -1 - wait, 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
-            SEND ORDER: message -> [(from, to, content), ...]
+            SEND ORDER: message -> [(from, to, s_time, content), ...]
         """
         # move agents + send messages
         for agent in self.agents:
@@ -215,11 +203,6 @@ class AsyncDcopMstEnv:
         pass
 
     def sample_actions(self, observations):
-        """
-        ACTION:
-            MOVE ORDER: -1 - wait, 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
-            SEND ORDER: message -> [(from, to, content), ...]
-        """
         actions = {agent.name: {
             'move': random.randint(0, 4),
             'send': []

@@ -1,3 +1,5 @@
+import logging
+
 from globals import *
 from environments.env_objects import *
 
@@ -66,7 +68,7 @@ def build_graph_from_np(img_np, show_map=False):
             set_nei(name_1, name_2, nodes_dict)
             name_1 = name_2
 
-    print('finished rows')
+    # print('finished rows')
 
     for i_y in range(y_size):
         for i_x in range(x_size):
@@ -74,7 +76,7 @@ def build_graph_from_np(img_np, show_map=False):
             set_nei(name_1, name_2, nodes_dict)
             name_1 = name_2
     make_self_neighbour(nodes)
-    print('finished columns')
+    # print('finished columns')
 
     if show_map:
         plt.imshow(img_np, cmap='gray', origin='lower')
@@ -82,4 +84,8 @@ def build_graph_from_np(img_np, show_map=False):
         # plt.pause(1)
         # plt.close()
 
+    for node in nodes:
+        node.init_actions(nodes_dict)
+
+    logging.debug('finished creating nodes')
     return nodes, nodes_dict
