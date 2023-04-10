@@ -196,6 +196,12 @@ class AsyncDcopMstEnv:
 
                 plot_async_mst_field(self.ax['A'], info)
 
+                if 'col' in info:
+                    plot_collisions(self.ax['B'], info)
+
+                if 'cov' in info:
+                    plot_rem_cov_req(self.ax['C'], info)
+
                 plt.pause(0.001)
                 # plt.show()
 

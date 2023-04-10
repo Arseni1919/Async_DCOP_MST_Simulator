@@ -11,6 +11,7 @@ class RandomMstAlgAgent(AlgAgent):
 class RandomMstAlg:
     def __init__(self):
         self.agents, self.agents_dict = None, None
+        self.name = 'random'
 
     def create_entities(self, sim_agents, sim_targets):
         self.agents, self.agents_dict = [], {}

@@ -1,3 +1,5 @@
+import numpy as np
+
 from globals import *
 
 
@@ -69,3 +71,22 @@ def plot_async_mst_field(ax, info):
     ax.set_ylim(0, info.width)
     ax.set_xlim(0, info.height)
     ax.set_title(f'prob: {info.i_problem}, iter: {info.i_time}')
+
+
+def plot_collisions(ax, info):
+    ax.cla()
+    info = AttributeDict(info)
+
+    ax.plot(np.cumsum(info.col))
+    ax.set_xlim(0, info.max_steps)
+    ax.set_title('collisions')
+
+
+def plot_rem_cov_req(ax, info):
+    ax.cla()
+    info = AttributeDict(info)
+
+    ax.plot(info.cov)
+    ax.set_xlim(0, info.max_steps)
+    ax.set_title('Remained Coverage Req.')
+

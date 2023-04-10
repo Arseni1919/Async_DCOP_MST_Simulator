@@ -13,4 +13,4 @@ import collections
 #
 # print(d.a)
 
-print(None != None)
+print(1 + True)

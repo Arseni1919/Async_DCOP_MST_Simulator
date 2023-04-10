@@ -76,3 +76,15 @@ def get_dsa_mst_replacement_decision(agent, new_pos, temp_req):
         # random return
         return random.random() < 0.8
     return False
+
+
+def calc_collisions(agents):
+    collisions = 0
+    for agent_1, agent_2 in combinations(agents, 2):
+        if agent_1.pos.xy_name == agent_2.pos.xy_name:
+            collisions += 1
+    return collisions
+
+
+def calc_rem_cov_req(targets):
+    return sum([target.temp_req for target in targets])
