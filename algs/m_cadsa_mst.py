@@ -2,6 +2,7 @@ from globals import *
 from algs.test_mst_alg import test_mst_alg
 from algs.alg_functions import *
 from algs.alg_objects import *
+from functions import *
 
 
 class CaDsaMstAlgConductor:
@@ -45,6 +46,8 @@ class CaDsaMstAlgAgent(AlgAgent):
         self.next_possible_pos, self.next_possible_action = None, None
         self.beliefs = {}
         self.next_pos_ready = False
+        self.move_ready = False
+        self.next_action = -1
         self.sync_time = 0
 
     def reset_beliefs(self):
@@ -117,17 +120,20 @@ class CaDsaMstAlgAgent(AlgAgent):
             self.next_pos_ready = True
 
         # if there is a possible collision -> stay on place
-        next_action = self.action_without_collisions()
+        # if not self.move_ready:
+        self.next_action = self.action_without_collisions()
 
-        if next_action != -1:
+        if self.next_action != -1:
             self.conductor.ready_to_move(self)
+            # self.move_ready = True
 
         if not self.conductor.ready_to_move_all():
             return -1
 
         self.next_pos_ready = False
+        # self.move_ready = False
         self.conductor.started_to_move(self)
-        return next_action
+        return self.next_action
 
     def get_send_order(self):
         """
@@ -185,17 +191,17 @@ class CaDsaMstAlg:
 
 
 def main():
+    set_seed(False, 353)
     alg = CaDsaMstAlg()
     # test_mst_alg(alg, to_render=False)
     # test_mst_alg(alg, to_render=True, plot_every=10)
+    # set_seed(True, 353)
     test_mst_alg(
         alg,
         n_agents=30,
         n_targets=10,
         to_render=True,
         plot_every=10,
-        random_seed_bool=True,
-        seed=572
     )
 
 

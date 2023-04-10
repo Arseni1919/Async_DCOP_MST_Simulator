@@ -10,15 +10,9 @@ def test_mst_alg(alg,
                  n_problems=3,
                  to_render=True,
                  plot_every=10,
-                 # random_seed_bool=False,
-                 random_seed_bool=True,
-                 seed=1,
                  ):
 
-    set_seed(random_seed_bool, seed)
-
     info = {'plot_every': plot_every, 'max_steps': max_steps}
-
 
     # map_dir = 'empty-48-48.map'  # 48-48
     # map_dir = 'random-64-64-10.map'  # 64-64
