@@ -125,6 +125,7 @@ class SimAgent:
     def set_next_pos_and_time(self, next_pos, arrival_time):
         self.next_pos = next_pos
         self.arrival_time = arrival_time
+        self.is_moving = True
 
     def go_to_next_pos(self):
         if self.next_pos is None:
@@ -132,6 +133,8 @@ class SimAgent:
         self.prev_pos = self.pos
         self.pos = self.next_pos
         self.next_pos = None
+        self.arrival_time = -1
+        self.is_moving = False
 
     def get_broken(self, pos, t):
         if not self.is_broken:

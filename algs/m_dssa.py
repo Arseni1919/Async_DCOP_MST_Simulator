@@ -87,7 +87,7 @@ class DssaAlgAgent(AlgAgent):
         return move_order, send_order
 
     def state_plan(self):
-        # TODO
+        # TODO:
         """
         DSSA:
         Exchange next possible positions until the solution without collisions will be found.

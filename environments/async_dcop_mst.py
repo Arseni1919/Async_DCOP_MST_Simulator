@@ -147,10 +147,9 @@ class AsyncDcopMstEnv:
 
         # --- arrived ---
         if self.step_count == agent.arrival_time:
-            agent.is_moving = False
             agent.go_to_next_pos()
 
-        # --- still moving ---
+        # --- still moving or waiting ---
         if agent.is_moving:
             return False
 
@@ -162,8 +161,7 @@ class AsyncDcopMstEnv:
         # new pos
         if move_order in agent.pos.actions_dict:
             new_pos = agent.pos.actions_dict[move_order]
-            arrival_time = random.randint(1, 3)
-            time_to_arrive = self.step_count + arrival_time  # takes time to make a movement
+            time_to_arrive = self.step_count + random.randint(5, 25)  # takes time to make a movement
             agent.set_next_pos_and_time(next_pos=new_pos, arrival_time=time_to_arrive)
         return True
 
@@ -173,7 +171,7 @@ class AsyncDcopMstEnv:
         """
         for from_a_name, to_a_name, s_time, content in send_order:
             # time_to_arrive = min(self.max_steps - 1, self.step_count + 1 + random.randint(0, 3))
-            time_to_arrive = self.step_count + 1 + random.randint(0, 3)
+            time_to_arrive = self.step_count + random.randint(1, 10)
             if time_to_arrive < self.max_steps:
                 self.mailbox[to_a_name][time_to_arrive].append((from_a_name, s_time, content))
 

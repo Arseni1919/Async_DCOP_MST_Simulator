@@ -104,8 +104,8 @@ class CaDsaMstAlgAgent(AlgAgent):
         return True
 
     def received_all_next_possible_pos(self):
-        for nei in self.nei_agents:
-            nei_name = nei['name']
+        for agent in self.nei_agents:
+            nei_name = agent['name']
             nei_next_possible_pos = self.beliefs[nei_name]['next_possible_pos']
             if nei_next_possible_pos is None:
                 return False
@@ -219,11 +219,12 @@ class CaDsaMstAlg:
     def get_actions(self, observations):
         actions = {}
         # state_counter
-        # print(f' ------------------------------ step: {observations["step_count"]} ------------------------------ ')
+        print(f' ------------------------------ step: {observations["step_count"]} ------------------------------ ')
         for agent in self.agents:
             move_order, send_order = agent.process(observations[agent.name])
             actions[agent.name] = {'move': move_order, 'send': send_order}
-            # print(f"{agent.name}'s state counter: {agent.state_counter}, state: {agent.state}")
+            print(f"{agent.name}'s state counter: {agent.state_counter}, state: {agent.state}")
+        calc_collisions(self.agents)
         return actions
 
     def get_info(self):
@@ -232,8 +233,8 @@ class CaDsaMstAlg:
 
 
 def main():
-    # set_seed(random_seed_bool=False, i_seed=353)
-    set_seed(random_seed_bool=True)
+    set_seed(random_seed_bool=False, i_seed=902)
+    # set_seed(random_seed_bool=True)
     alg = CaDsaMstAlg()
     # test_mst_alg(alg, to_render=False)
     # test_mst_alg(alg, to_render=True, plot_every=10)
@@ -244,8 +245,8 @@ def main():
         n_targets=10,
         to_render=True,
         plot_every=50,
-        n_problems=5,
-        max_steps=1200,
+        n_problems=3,
+        max_steps=500,
     )
 
 
