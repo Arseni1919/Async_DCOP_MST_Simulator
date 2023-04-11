@@ -100,6 +100,17 @@ class AsyncDcopMstEnv:
                     })
         return nei_agents
 
+    def get_all_agents(self, agent):
+        all_agents = []
+        for other_agent in self.agents:
+            if agent.name != other_agent.name:
+                all_agents.append({
+                        'name': other_agent.name,
+                        'num': other_agent.num,
+                        'pos': other_agent.pos,
+                    })
+        return all_agents
+
     def get_observations(self):
         observations = {
             agent.name: {
@@ -118,10 +129,12 @@ class AsyncDcopMstEnv:
                 'broken_time': agent.broken_time,
                 'nei_targets': self.get_nei_targets(agent),
                 'nei_agents': self.get_nei_agents(agent),
+                'all_agents': self.get_all_agents(agent),
                 'new_messages': self.mailbox[agent.name][self.step_count],
             }
             for agent in self.agents
         }
+        observations['step_count'] = self.step_count
         return observations
 
     def execute_move_order(self, agent, move_order):
@@ -185,7 +198,7 @@ class AsyncDcopMstEnv:
     def render(self, info):
         if self.to_render:
             info = AttributeDict(info)
-            if info.i_time % info.plot_every == 0:
+            if info.i_time % info.plot_every == 0 or info.i_time == self.max_steps - 1:
                 info.update({
                     'width': self.width,
                     'height': self.height,
@@ -246,6 +259,7 @@ def main():
         env.reset()
 
         for i_time in range(env.max_steps):
+
             # env - get observations
             observations = env.get_observations()
 

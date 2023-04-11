@@ -21,6 +21,7 @@ class AlgAgent:
         self.step_count = None
         self.nei_targets = None
         self.nei_agents = None
+        self.all_agents = None
         self.mailbox = {}
 
     def observe(self, observation):
@@ -39,4 +40,5 @@ class AlgAgent:
         self.broken_time = observation.broken_time
         self.nei_targets = observation.nei_targets
         self.nei_agents = observation.nei_agents
+        self.all_agents = observation.all_agents
         self.mailbox[self.step_count] = observation.new_messages

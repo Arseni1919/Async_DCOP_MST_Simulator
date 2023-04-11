@@ -65,6 +65,7 @@ def test_mst_alg(alg,
             info.update(alg_info)
             if to_render:
                 env.render(info)
+    plt.show()
 
 
 def main():
