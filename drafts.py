@@ -12,5 +12,5 @@ import collections
 # d = AttributeDict(d)
 #
 # print(d.a)
-
-print(1 + True)
+import random
+print(random.randint(1, 1))
