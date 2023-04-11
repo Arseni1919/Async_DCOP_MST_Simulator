@@ -102,8 +102,8 @@ class SimAgent:
         self.pos = pos
         self.start_pos = self.pos
         self.prev_pos = None
-        self.next_pos = None
 
+        self.next_pos = None
         self.is_moving = False
         self.arrival_time = None
 
