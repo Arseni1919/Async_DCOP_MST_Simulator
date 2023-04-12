@@ -90,3 +90,13 @@ def plot_rem_cov_req(ax, info):
     ax.set_xlim(0, info.max_steps)
     ax.set_title('Remained Coverage Req.')
 
+
+def plot_aom(ax, info):
+    ax.cla()
+    info = AttributeDict(info)
+
+    ax.plot(info.aom)
+    ax.set_xlim(0, info.max_steps)
+    ax.set_title('Amount of messages')
+
+

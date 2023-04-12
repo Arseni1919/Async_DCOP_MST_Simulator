@@ -89,3 +89,65 @@ def build_graph_from_np(img_np, show_map=False):
 
     logging.debug('finished creating nodes')
     return nodes, nodes_dict
+
+
+def is_close(t, robot, nodes_dict):
+    for next_pos_name in robot.pos.neighbours:
+        next_pos = nodes_dict[next_pos_name]
+        if distance_nodes(next_pos, t.pos) <= robot.sr:
+            return True
+    return False
+
+
+def cover_target(target, robots_set):
+    cumulative_cov = sum([robot.cred for robot in robots_set])
+    return cumulative_cov > target.req
+
+
+def select_FMR_nei(target, targets, agents, nodes_dict):
+    total_set = []
+    SR_set = []
+    rest_set = []
+
+    for robot in agents:
+        dist = distance_nodes(robot.pos, target.pos)
+
+        if dist <= robot.sr + robot.mr:
+            total_set.append(robot)
+            if dist <= robot.sr:
+                SR_set.append(robot)
+            else:
+                rest_set.append(robot)
+
+    while cover_target(target, total_set):
+        def get_degree(agent):
+            targets_nearby = []
+            for t in targets:
+                if is_close(t, agent, nodes_dict):
+                    targets_nearby.append(t)
+            return len(targets_nearby)
+
+        max_degree = max([get_degree(x) for x in rest_set], default=0)
+        min_degree = min([get_degree(x) for x in SR_set], default=0)
+        if len(rest_set) > 0:
+            selected_to_remove = list(filter(lambda x: get_degree(x) == max_degree, rest_set))[0]
+            rest_set.remove(selected_to_remove)
+        else:
+            selected_to_remove = list(filter(lambda x: get_degree(x) == min_degree, SR_set))[0]
+            SR_set.remove(selected_to_remove)
+
+        temp_total_set = total_set[:]
+        temp_total_set.remove(selected_to_remove)
+        if not cover_target(target, temp_total_set):
+            break
+        total_set.remove(selected_to_remove)
+    # return total_set
+
+    total_set.sort(key=lambda x: x.cred, reverse=True)
+    return_set = []
+    for robot in total_set:
+        if not cover_target(target, return_set):
+            return_set.append(robot)
+    if len(total_set) > len(return_set):
+        pass
+    return return_set

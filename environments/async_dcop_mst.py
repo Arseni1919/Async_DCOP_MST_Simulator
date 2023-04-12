@@ -6,9 +6,10 @@ from plot_functions.plot_functions import *
 
 
 class AsyncDcopMstEnv:
-    def __init__(self, max_steps, map_dir, to_render=True):
+    def __init__(self, max_steps, map_dir, with_fmr=False, to_render=True):
         self.max_steps = max_steps
         self.map_dir = map_dir
+        self.with_fmr = with_fmr
         self.to_render = to_render
         self.name = 'AsyncDcopMstEnv'
         # create_new_problem
@@ -20,6 +21,7 @@ class AsyncDcopMstEnv:
         self.mailbox = None
 
         # for rendering
+        self.amount_of_messages_list = None
         # self.fig, self.ax = plt.subplots(2, 2, figsize=(12, 8))
         if self.to_render:
             self.fig, self.ax = plt.subplot_mosaic("AAB;AAC;AAD", figsize=(12, 8))
@@ -34,7 +36,7 @@ class AsyncDcopMstEnv:
         # create agents
         for i in range(n_agents):
             new_pos = positions_pool.pop()
-            new_agent = SimAgent(num=i, cred=20, sr=10, mr=1, pos=new_pos)
+            new_agent = SimAgent(num=i, cred=30, sr=10, mr=1, pos=new_pos)
             self.agents.append(new_agent)
             self.agents_dict[new_agent.name] = new_agent
             # print(f'{new_agent.name} - {new_agent.pos.x}-{new_agent.pos.y}')
@@ -68,6 +70,15 @@ class AsyncDcopMstEnv:
             for agent in self.agents
         }
 
+        # for rendering
+        self.amount_of_messages_list = []
+
+    def update_fmr_nei(self):
+        if self.with_fmr:
+            for target in self.targets:
+                target.fmr_nei = select_FMR_nei(target, self.targets, self.agents, self.nodes_dict)
+            # print()
+
     def get_nei_targets(self, agent):
         def is_close(t):
             for next_pos_name in agent.pos.neighbours:
@@ -85,6 +96,7 @@ class AsyncDcopMstEnv:
                     'pos': target.pos,
                     'req': target.req,
                     'temp_req': target.temp_req,
+                    'fmr_nei': [a.name for a in target.fmr_nei]
                 })
         return nei_targets
 
@@ -154,6 +166,9 @@ class AsyncDcopMstEnv:
             return False
 
         # --- if not moving and not broken... ---
+        if move_order is None:
+            raise RuntimeError('move_order is None')
+
         # idle
         if move_order == 0:
             return True
@@ -190,8 +205,19 @@ class AsyncDcopMstEnv:
 
         # update targets' data
         _ = [target.update_temp_req(self.agents) for target in self.targets]
+        self.update_fmr_nei()
+
+        # for rendering
+        self.amount_of_messages_list.append(self.calc_amount_of_messages())
 
         self.step_count += 1
+
+    def calc_amount_of_messages(self):
+        amount_of_messages = 0
+        for agent in self.agents:
+            for i in range(self.step_count):
+                amount_of_messages += len(self.mailbox[agent.name][i])
+        return amount_of_messages
 
     def render(self, info):
         if self.to_render:
@@ -203,6 +229,7 @@ class AsyncDcopMstEnv:
                     'nodes': self.nodes,
                     'targets': self.targets,
                     'agents': self.agents,
+                    'aom': self.amount_of_messages_list,
                 })
 
                 plot_async_mst_field(self.ax['A'], info)
@@ -212,6 +239,8 @@ class AsyncDcopMstEnv:
 
                 if 'cov' in info:
                     plot_rem_cov_req(self.ax['C'], info)
+
+                plot_aom(self.ax['D'], info)
 
                 plt.pause(0.001)
                 # plt.show()

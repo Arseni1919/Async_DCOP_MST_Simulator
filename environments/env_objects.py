@@ -78,6 +78,7 @@ class SimTarget:
         self.temp_req = req
         self.life_start = life_start
         self.life_end = life_end
+        self.fmr_nei = []
 
         self.name = f'target_{self.num}'
 

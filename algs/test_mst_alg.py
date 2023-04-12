@@ -10,6 +10,7 @@ def test_mst_alg(alg,
                  n_problems=3,
                  to_render=True,
                  plot_every=10,
+                 with_fmr=False,
                  ):
 
     info = {'plot_every': plot_every, 'max_steps': max_steps}
@@ -22,6 +23,7 @@ def test_mst_alg(alg,
     env = AsyncDcopMstEnv(
         max_steps=max_steps,
         map_dir=map_dir,
+        with_fmr=with_fmr,
         to_render=to_render,
     )
 
