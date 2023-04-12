@@ -161,7 +161,7 @@ class AsyncDcopMstEnv:
         # new pos
         if move_order in agent.pos.actions_dict:
             new_pos = agent.pos.actions_dict[move_order]
-            time_to_arrive = self.step_count + random.randint(3, 5)  # takes time to make a movement
+            time_to_arrive = self.step_count + random.randint(2, 3)  # takes time to make a movement
             agent.set_next_pos_and_time(next_pos=new_pos, arrival_time=time_to_arrive)
         return True
 
