@@ -1,5 +1,4 @@
 """
-TODO: - Max-sum_MST with breakdowns
 TODO: - CAMS
 TODO: graph for collisions
 TODO: graph for remained coverage requirement

@@ -78,9 +78,13 @@ def get_dsa_mst_replacement_decision(agent, new_pos, temp_req):
     return False
 
 
-def calc_collisions(agents):
+def calc_collisions(agents, step_count):
     collisions = 0
     for agent_1, agent_2 in combinations(agents, 2):
+        if agent_1.is_broken and agent_1.broken_time != step_count - 1:
+            continue
+        if agent_2.is_broken and agent_2.broken_time == step_count - 1:
+            continue
         if agent_1.pos.xy_name == agent_2.pos.xy_name:
             collisions += 1
     return collisions

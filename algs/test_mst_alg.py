@@ -58,7 +58,7 @@ def test_mst_alg(alg,
             # logs
             info['i_problem'] = i_problem
             info['i_time'] = i_time
-            info['col'].append(calc_collisions(env.agents))
+            info['col'].append(calc_collisions(env.agents, env.step_count))
             info['cov'].append(calc_rem_cov_req(env.targets))
 
             # render

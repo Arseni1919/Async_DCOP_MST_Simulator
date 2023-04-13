@@ -103,11 +103,13 @@ class SimAgent:
         self.pos = pos
         self.start_pos = self.pos
         self.prev_pos = None
+        self.last_time_pos = None
 
         self.next_pos = None
         self.is_moving = False
         self.arrival_time = None
 
+        self.col_agents_list = None
         self.is_broken = False
         self.broken_pos = None
         self.broken_time = -1
@@ -122,6 +124,9 @@ class SimAgent:
         self.is_broken = False
         self.broken_pos = None
         self.broken_time = -1
+
+    def clear_col_agents_list(self):
+        self.col_agents_list = []
 
     def set_next_pos_and_time(self, next_pos, arrival_time):
         self.next_pos = next_pos

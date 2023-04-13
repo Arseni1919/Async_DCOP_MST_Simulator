@@ -32,4 +32,5 @@ Distributed Search with Mobile Sensor Teams.
 
 ## Credits
 
-- []()
+- [blog | Python – All possible pairs in List
+](https://www.geeksforgeeks.org/python-all-possible-pairs-in-list/)

@@ -17,6 +17,7 @@ class AlgAgent:
         self.is_broken = False
         self.broken_pos = None
         self.broken_time = -1
+        self.col_agents_list = None
 
         self.step_count = None
         self.nei_targets = None
@@ -38,6 +39,7 @@ class AlgAgent:
         self.is_broken = observation.is_broken
         self.broken_pos = observation.broken_pos
         self.broken_time = observation.broken_time
+        self.col_agents_list = observation.col_agents_list
         self.nei_targets = observation.nei_targets
         self.nei_agents = observation.nei_agents
         self.all_agents = observation.all_agents

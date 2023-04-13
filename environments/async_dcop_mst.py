@@ -73,8 +73,18 @@ class AsyncDcopMstEnv:
         # for rendering
         self.amount_of_messages_list = []
 
+    def update_collisions(self):
+        _ = [agent.clear_col_agents_list() for agent in self.agents]
+        for agent_1, agent_2 in combinations(self.agents, 2):
+            if agent_1.pos.xy_name == agent_2.pos.xy_name:
+                agent_1.col_agents_list.append(agent_2.name)
+                agent_2.col_agents_list.append(agent_1.name)
+
     def update_fmr_nei(self):
         if self.with_fmr:
+            for agent in self.agents:
+                if agent.last_time_pos == agent.pos:
+                    return
             for target in self.targets:
                 target.fmr_nei = select_FMR_nei(target, self.targets, self.agents, self.nodes_dict)
             # print()
@@ -139,6 +149,7 @@ class AsyncDcopMstEnv:
                 'is_broken': agent.is_broken,
                 'broken_pos': agent.broken_pos,
                 'broken_time': agent.broken_time,
+                'col_agents_list': agent.col_agents_list,
                 'nei_targets': self.get_nei_targets(agent),
                 'nei_agents': self.get_nei_agents(agent),
                 'all_agents': self.get_all_agents(agent),
@@ -165,12 +176,17 @@ class AsyncDcopMstEnv:
         if agent.is_moving:
             return False
 
+        # get broken
+        if move_order == 404:
+            agent.get_broken(agent.pos, self.step_count)
+
         # --- if not moving and not broken... ---
         if move_order is None:
             raise RuntimeError('move_order is None')
 
         # idle
         if move_order == 0:
+            agent.last_time_pos = agent.pos
             return True
 
         # new pos
@@ -206,6 +222,9 @@ class AsyncDcopMstEnv:
         # update targets' data
         _ = [target.update_temp_req(self.agents) for target in self.targets]
         self.update_fmr_nei()
+
+        # update agents' data
+        self.update_collisions()
 
         # for rendering
         self.amount_of_messages_list.append(self.calc_amount_of_messages())

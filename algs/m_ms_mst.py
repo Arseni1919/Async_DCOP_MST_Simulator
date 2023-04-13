@@ -6,10 +6,10 @@ from functions import *
 
 
 class MaxSumMstAlgAgent(AlgAgent):
-    def __init__(self, sim_agent):
+    def __init__(self, sim_agent, with_breakdowns):
         super(MaxSumMstAlgAgent, self).__init__(sim_agent)
-        self.next_action = -1
         self.beliefs = {}
+        self.with_breakdowns = with_breakdowns
 
         # states
         self.sync_time = 0
@@ -39,13 +39,18 @@ class MaxSumMstAlgAgent(AlgAgent):
                 if self.state == content['state']:
                     self.beliefs[from_a_name]['state'] = content['state']
 
+    def update_breakdowns(self):
+        if len(self.col_agents_list) > 0:
+            self.next_ms_action = 404
+            self.next_ms_pos = self.pos
+
     def decide_next_ms_move(self):
         next_action_value_dict = {}
         nei_targets = [AttributeDict(t) for t in self.nei_targets]
         for next_action, next_pos in self.pos.actions_dict.items():
             next_value = 0
             for target in nei_targets:
-                if distance_nodes(self.pos, target.pos) <= self.sr:
+                if distance_nodes(next_pos, target.pos) <= self.sr:
                     if self.name in target.fmr_nei:
                         next_value += min(self.cred, target.temp_req)
             next_action_value_dict[next_action] = next_value
@@ -59,7 +64,6 @@ class MaxSumMstAlgAgent(AlgAgent):
         """
         if not show_next_pos:
             self.next_pos = None
-            self.next_action = None
         messages = []
         for agent in self.all_agents:
             content = {
@@ -91,6 +95,7 @@ class MaxSumMstAlgAgent(AlgAgent):
         send_order = self.get_send_order(show_next_pos=False)
         if self.all_states_aligned():
             self.reset_beliefs()
+            self.sync_time = self.step_count
             self.state = 'plan'
         return move_order, send_order
 
@@ -105,6 +110,8 @@ class MaxSumMstAlgAgent(AlgAgent):
     def state_f_plan(self):
         move_order = -1
         send_order = self.get_send_order()
+        if self.with_breakdowns:
+            self.update_breakdowns()
         if self.all_states_aligned():
             self.state = 'move'
             return self.next_ms_action, send_order
@@ -114,7 +121,7 @@ class MaxSumMstAlgAgent(AlgAgent):
         move_order = -1
         send_order = self.get_send_order(show_next_pos=False)
         if self.is_moving:
-            self.sync_time = self.step_count
+
             return move_order, send_order  # wait
         self.state_counter += 1
         self.state = 'f_move'
@@ -146,14 +153,17 @@ class MaxSumMstAlgAgent(AlgAgent):
 
 
 class MaxSumMstAlg:
-    def __init__(self):
-        self.name = 'CADSA'
+    def __init__(self, with_breakdowns=False):
+        self.name = 'Max-Sum'
         self.agents, self.agents_dict = None, None
+        self.sim_agents, self.sim_targets = None, None
+        self.with_breakdowns = with_breakdowns
 
     def create_entities(self, sim_agents, sim_targets):
+        self.sim_agents, self.sim_targets = sim_agents, sim_targets
         self.agents, self.agents_dict = [], {}
         for sim_agent in sim_agents:
-            new_agent = MaxSumMstAlgAgent(sim_agent)
+            new_agent = MaxSumMstAlgAgent(sim_agent, self.with_breakdowns)
             self.agents.append(new_agent)
             self.agents_dict[new_agent.name] = new_agent
 
@@ -168,7 +178,8 @@ class MaxSumMstAlg:
             move_order, send_order = agent.process(observations[agent.name])
             actions[agent.name] = {'move': move_order, 'send': send_order}
             # print(f"{agent.name}'s state counter: {agent.state_counter}, state: {agent.state}")
-        calc_collisions(self.agents)
+            # for target in self.sim_targets:
+            #     print(f'{target.name}: {target.fmr_nei=}')
         return actions
 
     def get_info(self):
@@ -179,14 +190,14 @@ class MaxSumMstAlg:
 def main():
     # set_seed(random_seed_bool=False, i_seed=902)
     set_seed(random_seed_bool=True)
-    alg = MaxSumMstAlg()
+    alg = MaxSumMstAlg(with_breakdowns=True)
     # test_mst_alg(alg, to_render=False)
     # test_mst_alg(alg, to_render=True, plot_every=10)
     # set_seed(True, 353)
     test_mst_alg(
         alg,
         n_agents=30,
-        n_targets=10,
+        n_targets=30,
         to_render=True,
         plot_every=50,
         n_problems=3,

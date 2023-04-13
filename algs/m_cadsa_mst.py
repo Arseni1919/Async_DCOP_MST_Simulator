@@ -224,7 +224,6 @@ class CaDsaMstAlg:
             move_order, send_order = agent.process(observations[agent.name])
             actions[agent.name] = {'move': move_order, 'send': send_order}
             print(f"{agent.name}'s state counter: {agent.state_counter}, state: {agent.state}")
-        calc_collisions(self.agents)
         return actions
 
     def get_info(self):
