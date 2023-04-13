@@ -103,6 +103,11 @@ class CamsAlgAgent(AlgAgent):
         return move_order, send_order
 
     def state_plan(self):
+        # TODO:
+        """
+        - agents and PosNodes exchange messages
+        - choose the best one if there are neighbours or choose the random one otherwise
+        """
         # self.decide_next_possible_move()
         self.decide_next_cams_move()
         self.state = 'f_plan'
