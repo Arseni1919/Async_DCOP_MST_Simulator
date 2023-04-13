@@ -52,10 +52,11 @@ class MaxSumMstAlgAgent(AlgAgent):
             for target in nei_targets:
                 if distance_nodes(next_pos, target.pos) <= self.sr:
                     if self.name in target.fmr_nei:
-                        next_value += min(self.cred, target.temp_req)
+                        next_value += self.cred
             next_action_value_dict[next_action] = next_value
         max_value = max(next_action_value_dict.values())
-        self.next_ms_action = random.choice([k for k, v in next_action_value_dict.items() if v == max_value])
+        max_actions = [k for k, v in next_action_value_dict.items() if v == max_value]
+        self.next_ms_action = random.choice(max_actions)
         self.next_ms_pos = self.pos.actions_dict[self.next_ms_action]
 
     def get_send_order(self, show_next_pos=True):
@@ -190,7 +191,10 @@ class MaxSumMstAlg:
 def main():
     # set_seed(random_seed_bool=False, i_seed=902)
     set_seed(random_seed_bool=True)
+
+    # alg = MaxSumMstAlg(with_breakdowns=False)
     alg = MaxSumMstAlg(with_breakdowns=True)
+
     # test_mst_alg(alg, to_render=False)
     # test_mst_alg(alg, to_render=True, plot_every=10)
     # set_seed(True, 353)
