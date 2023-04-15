@@ -70,7 +70,7 @@ def plot_async_mst_field(ax, info):
 
     ax.set_ylim(0, info.width)
     ax.set_xlim(0, info.height)
-    ax.set_title(f'prob: {info.i_problem + 1}, iter: {info.i_time}')
+    ax.set_title(f'{info.alg_name} | problem: {info.i_problem + 1}, iter: {info.i_time}')
 
 
 def plot_collisions(ax, info):
