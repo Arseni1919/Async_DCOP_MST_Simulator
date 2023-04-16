@@ -5,11 +5,32 @@ from algs.alg_objects import *
 from functions import *
 
 
-def reset_beliefs(all_agents):
+def get_messages_for_all_agents(self, show_next_pos=False):
+    """
+    SEND ORDER: message -> [(from, to, s_time, content), ...]
+    """
+    if not show_next_pos:
+        self.next_pos = None
+    messages = []
+    for agent in self.all_agents:
+        content = {
+            'state': self.state,
+            'small_iter': self.small_iter
+        }
+        new_message = (self.name, agent['name'], self.step_count, content)
+        messages.append(new_message)
+    return messages
+
+
+def reset_beliefs(all_agents, nei_pos_nodes=None):
+    all_entities = []
+    all_entities.extend(all_agents)
+    if nei_pos_nodes is not None:
+        all_entities.extend(nei_pos_nodes)
     beliefs = {}
-    for agent in all_agents:
+    for entity in all_entities:
         # create belief if this is new agent
-        beliefs[agent['name']] = {
+        beliefs[entity['name']] = {
             'state': '',
             'small_iter': None
         }
@@ -49,13 +70,95 @@ class CamsAlgPosNode:
 
         self.nei_agents = None
         self.all_agents = None
-        self.all_pos_nodes = None
+        # self.all_pos_nodes = None
+
+    def is_with_nei(self):
+        return len(self.nei_agents) > 0
 
     def reset_beliefs(self):
         self.beliefs = reset_beliefs(self.all_agents)
 
     def update_beliefs(self):
         update_beliefs(self.mailbox, self.step_count, self.sync_time, self.state, self.small_iter, self.beliefs)
+
+    def observe(self, observation):
+        observation = AttributeDict(observation)
+        self.step_count = observation.step_count
+        self.pos = observation.pos
+        self.nei_agents = observation.nei_agents
+        self.all_agents = observation.all_agents
+        # self.all_pos_nodes = observation.all_pos_nodes
+        self.mailbox[self.step_count] = observation.new_messages
+
+    def get_regular_send_order(self):
+        messages = []
+        for agent in self.nei_agents:
+            content = {
+                'state': self.state,
+                'small_iter': self.small_iter
+            }
+            new_message = (self.name, agent['name'], self.step_count, content)
+            messages.append(new_message)
+        return messages
+
+    def get_plan_send_order(self):
+        messages = self.get_regular_send_order()
+        return messages
+
+    def all_states_aligned(self):
+        for agent in self.nei_agents:
+            agent_name = agent['name']
+            state = self.beliefs[agent_name]['state']
+            small_iter = self.beliefs[agent_name]['small_iter']
+            if state != self.state:  #  or small_iter != self.small_iter
+                return False
+        return True
+    # ------------------------------------ states ------------------------------------ #
+
+    def state_first(self):
+        self.reset_beliefs()
+        self.state = 'plan'
+        self.small_iter = 0
+        return []
+
+    def state_plan(self):
+        # TODO:
+        if len(self.nei_agents) == 0:
+            return []
+        self.state = 'f_plan'
+        self.small_iter += 1
+        self.sync_time = self.step_count
+        send_order = self.get_plan_send_order()
+        return send_order
+
+    def state_f_plan(self):
+        if len(self.nei_agents) == 0:
+            return []
+        if self.all_states_aligned():
+            if self.small_iter > self.max_small_iterations:
+                self.small_iter = 0
+
+            self.state = 'plan'
+        send_order = self.get_regular_send_order()
+        return send_order
+
+    def process(self, observation):
+        self.observe(observation)
+        self.update_beliefs()
+
+        if self.state == 'first':
+            send_order = self.state_first()
+
+        elif self.state == 'plan':
+            send_order = self.state_plan()
+
+        elif self.state == 'f_plan':
+            send_order = self.state_f_plan()
+
+        else:
+            raise RuntimeError('unknown state')
+
+        return -1, send_order
 
 
 class CamsAlgAgent(AlgAgent):
@@ -75,15 +178,50 @@ class CamsAlgAgent(AlgAgent):
         self.small_iter = 0
 
     def reset_beliefs(self):
-        self.beliefs = reset_beliefs(self.all_agents)
+        self.beliefs = reset_beliefs(self.all_agents, self.nei_pos_nodes)
 
     def update_beliefs(self):
         update_beliefs(self.mailbox, self.step_count, self.sync_time, self.state, self.small_iter, self.beliefs)
 
-    def update_breakdowns(self):
-        if len(self.col_agents_list) > 0:
-            self.next_cams_action = 404
-            self.next_cams_pos = self.pos
+    def get_regular_send_order(self, show_next_pos=True):
+        """
+        SEND ORDER: message -> [(from, to, s_time, content), ...]
+        """
+        messages_for_all_agents = get_messages_for_all_agents(self, show_next_pos)
+        return messages_for_all_agents
+
+    def get_messages_for_nei_pos_nodes(self):
+        """
+        SEND ORDER: message -> [(from, to, s_time, content), ...]
+        """
+        messages = []
+        for pos_node in self.nei_pos_nodes:
+            content = {
+                'state': self.state,
+                'small_iter': self.small_iter
+            }
+            # create ms_message
+            # add from targets
+            # add from other pos_nodes
+
+            new_message = (self.name, pos_node['name'], self.step_count, content)
+            messages.append(new_message)
+        return messages
+
+    def get_plan_send_order(self):
+        """
+        SEND ORDER: message -> [(from, to, s_time, content), ...]
+        """
+        messages = []
+        # for all agents
+        messages_for_all_agents = get_messages_for_all_agents(self, show_next_pos=False)
+        messages.extend(messages_for_all_agents)
+
+        # for pos nodes
+        messages_for_nei_pos_nodes = self.get_messages_for_nei_pos_nodes()
+        messages.extend(messages_for_nei_pos_nodes)
+
+        return messages
 
     def decide_next_cams_move(self):
         next_action_value_dict = {}
@@ -99,44 +237,30 @@ class CamsAlgAgent(AlgAgent):
         self.next_cams_action = random.choice([k for k, v in next_action_value_dict.items() if v == max_value])
         self.next_cams_pos = self.pos.actions_dict[self.next_cams_action]
 
-    def get_regular_send_order(self, show_next_pos=True):
-        """
-        SEND ORDER: message -> [(from, to, s_time, content), ...]
-        """
-        if not show_next_pos:
-            self.next_pos = None
-        messages = []
+    def update_breakdowns(self):
+        if len(self.col_agents_list) > 0:
+            self.next_cams_action = 404
+            self.next_cams_pos = self.pos
+
+    def all_agents_states_aligned(self):
         for agent in self.all_agents:
-            content = {
-                'state': self.state,
-                'small_iter': self.small_iter
-            }
-            new_message = (self.name, agent['name'], self.step_count, content)
-            messages.append(new_message)
-        return messages
-
-    def get_plan_send_order(self):
-        """
-        SEND ORDER: message -> [(from, to, s_time, content), ...]
-        """
-        messages = []
-        # for all agents
-        for agent in self.all_agents:
-            content = {
-                'state': self.state,
-            }
-            new_message = (self.name, agent['name'], self.step_count, content)
-            messages.append(new_message)
-
-        # for pos nodes
-        pass
-
-        return messages
+            agent_name = agent['name']
+            state = self.beliefs[agent_name]['state']
+            if state != self.state:
+                return False
+        return True
 
     def all_states_aligned(self):
-        for agent_name, belief in self.beliefs.items():
-            state = belief['state']
+        for agent in self.all_agents:
+            agent_name = agent['name']
+            state = self.beliefs[agent_name]['state']
             if state != self.state:
+                return False
+        for nei_pos_node in self.nei_pos_nodes:
+            pos_node_name = nei_pos_node['name']
+            state = self.beliefs[pos_node_name]['state']
+            small_iter = self.beliefs[pos_node_name]['small_iter']
+            if state != self.state or small_iter != self.small_iter:
                 return False
         return True
 
@@ -153,7 +277,7 @@ class CamsAlgAgent(AlgAgent):
     def state_f_move(self):
         move_order = -1
         send_order = self.get_regular_send_order(show_next_pos=False)
-        if self.all_states_aligned():
+        if self.all_agents_states_aligned():
             self.reset_beliefs()
             self.sync_time = self.step_count
             self.small_iter = 0
@@ -172,21 +296,22 @@ class CamsAlgAgent(AlgAgent):
         move_order = -1
         self.sync_time = self.step_count
         send_order = self.get_plan_send_order()
-        if self.small_iter == self.max_small_iterations - 1:
+        if self.small_iter == self.max_small_iterations:
             self.decide_next_cams_move()
         return move_order, send_order
 
     def state_f_plan(self):
-        move_order = -1
-        send_order = self.get_regular_send_order()
         if self.all_states_aligned():
             if self.small_iter < self.max_small_iterations:
                 self.state = 'plan'
             else:
                 self.state = 'move'
-                if self.with_breakdowns:
-                    self.update_breakdowns()
+                # if self.with_breakdowns:
+                #     self.update_breakdowns()
+                send_order = self.get_plan_send_order()
                 return self.next_cams_action, send_order
+        move_order = -1
+        send_order = self.get_plan_send_order()
         return move_order, send_order
 
     def state_move(self):
@@ -227,30 +352,50 @@ class CamsAlg:
     def __init__(self, with_breakdowns=False, max_small_iterations=5):
         self.name = 'CAMS'
         self.agents, self.agents_dict = None, None
-        self.sim_agents, self.sim_targets = None, None
+        self.pos_nodes, self.pos_nodes_dict = None, None
+        self.all_entities, self.all_entities_dict = None, None
+        self.sim_agents, self.sim_targets, self.sim_nodes = None, None, None
         self.with_breakdowns = with_breakdowns
         self.max_small_iterations = max_small_iterations
 
-    def create_entities(self, sim_agents, sim_targets):
-        self.sim_agents, self.sim_targets = sim_agents, sim_targets
+    def create_entities(self, sim_agents, sim_targets, sim_nodes):
+        self.sim_agents, self.sim_targets, self.sim_nodes = sim_agents, sim_targets, sim_nodes
         self.agents, self.agents_dict = [], {}
+        self.pos_nodes, self.pos_nodes_dict = [], {}
+        self.all_entities, self.all_entities_dict = [], {}
         for sim_agent in sim_agents:
             new_agent = CamsAlgAgent(sim_agent, self.with_breakdowns, self.max_small_iterations)
             self.agents.append(new_agent)
             self.agents_dict[new_agent.name] = new_agent
+            self.all_entities.append(new_agent)
+            self.all_entities_dict[new_agent.name] = new_agent
+        for node in sim_nodes:
+            new_pos_node = CamsAlgPosNode(node, self.max_small_iterations)
+            self.pos_nodes.append(new_pos_node)
+            self.pos_nodes_dict[new_pos_node.name] = new_pos_node
+            self.all_entities.append(new_pos_node)
+            self.all_entities_dict[new_pos_node.name] = new_pos_node
 
-    def reset(self, sim_agents, sim_targets):
-        self.create_entities(sim_agents, sim_targets)
+    def reset(self, sim_agents, sim_targets, sim_nodes):
+        self.create_entities(sim_agents, sim_targets, sim_nodes)
 
     def get_actions(self, observations):
+        print('[ALG] execute get_actions..')
         actions = {}
         # state_counter
         print(f' ------------------------------ step: {observations["step_count"]} ------------------------------ ')
-        for agent in self.agents:
-            move_order, send_order = agent.process(observations[agent.name])
-            actions[agent.name] = {'move': move_order, 'send': send_order}
-            if agent.state == 'plan':
-                print(f"{agent.name}'s state counter: {agent.state_counter}, state: {agent.state}, iter: {agent.small_iter}")
+        for entity in self.all_entities:
+            move_order, send_order = entity.process(observations[entity.name])
+            actions[entity.name] = {'move': move_order, 'send': send_order}
+            # if 'agent' in entity.name:  #  and entity.state == 'plan'
+            #     print(f"{entity.name}'s state counter: {entity.state_counter}, state: {entity.state}, iter: {entity.small_iter}")
+        for entity in self.all_entities:
+            if 'agent' in entity.name:
+                print(f"{entity.name}'s state counter: {entity.state_counter}, state: {entity.state}, iter: {entity.small_iter}")
+            # elif entity.is_with_nei():
+            #     print(f"{entity.name}'s state counter: {entity.state_counter}, state: {entity.state}, iter: {entity.small_iter}")
+
+
             # for target in self.sim_targets:
             #     print(f'{target.name}: {target.fmr_nei=}')
         return actions
@@ -261,8 +406,8 @@ class CamsAlg:
 
 
 def main():
-    # set_seed(random_seed_bool=False, i_seed=902)
-    set_seed(random_seed_bool=True)
+    set_seed(random_seed_bool=False, i_seed=678)
+    # set_seed(random_seed_bool=True)
 
     alg = CamsAlg()
     # alg = CamsAlg(with_breakdowns=True)
@@ -272,8 +417,8 @@ def main():
     # set_seed(True, 353)
     test_mst_alg(
         alg,
-        n_agents=30,
-        n_targets=30,
+        n_agents=5,
+        n_targets=5,
         to_render=True,
         plot_every=10,
         n_problems=3,

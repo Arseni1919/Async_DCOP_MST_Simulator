@@ -46,4 +46,6 @@ class AlgAgent:
         self.nei_targets = observation.nei_targets
         self.nei_agents = observation.nei_agents
         self.all_agents = observation.all_agents
+        self.nei_pos_nodes = observation.nei_pos_nodes
+        # self.all_pos_nodes = observation.all_pos_nodes
         self.mailbox[self.step_count] = observation.new_messages

@@ -1,3 +1,5 @@
+import logging
+
 import matplotlib.pyplot as plt
 
 from globals import *
@@ -69,6 +71,10 @@ class AsyncDcopMstEnv:
             agent.name: {i: [] for i in range(self.max_steps)}
             for agent in self.agents
         }
+        self.mailbox.update({
+            node.xy_name: {i: [] for i in range(self.max_steps)}
+            for node in self.nodes
+        })
 
         # for rendering
         self.amount_of_messages_list = []
@@ -90,6 +96,7 @@ class AsyncDcopMstEnv:
             # print()
 
     def get_nei_targets(self, agent):
+        logging.debug(f"[ENV]: get_nei_targets")
         def is_close(t):
             for next_pos_name in agent.pos.neighbours:
                 next_pos = self.nodes_dict[next_pos_name]
@@ -110,7 +117,21 @@ class AsyncDcopMstEnv:
                 })
         return nei_targets
 
+    def get_pos_node_nei_agents(self, pos_node):
+        logging.debug(f"[ENV]: get_pos_node_nei_agents")
+        pos_name = pos_node.xy_name
+        nei_agents = []
+        for other_agent in self.agents:
+            if pos_name == other_agent.pos.xy_name or pos_name in other_agent.pos.neighbours:
+                nei_agents.append({
+                    'name': other_agent.name,
+                    'num': other_agent.num,
+                    'pos': other_agent.pos,
+                })
+        return nei_agents
+
     def get_nei_agents(self, agent):
+        logging.debug(f"[ENV]: get_nei_agents")
         nei_agents = []
         for other_agent in self.agents:
             if agent.name != other_agent.name:
@@ -122,18 +143,51 @@ class AsyncDcopMstEnv:
                     })
         return nei_agents
 
-    def get_all_agents(self, agent):
+    def get_nei_pos_nodes(self, agent):
+        logging.debug(f"[ENV]: get_nei_pos_nodes")
+        nei_pos_nodes = []
+        for pos_node_name in agent.pos.neighbours:
+            nei_pos_nodes.append({
+                'name': pos_node_name,
+                'pos': self.nodes_dict[pos_node_name],
+            })
+        nei_pos_nodes.append({
+            'name': agent.pos.xy_name,
+            'pos': agent.pos,
+        })
+        return nei_pos_nodes
+
+    def get_all_agents(self, agent=None):
+        logging.debug(f"[ENV]: get_all_agents")
         all_agents = []
         for other_agent in self.agents:
-            if agent.name != other_agent.name:
-                all_agents.append({
-                        'name': other_agent.name,
-                        'num': other_agent.num,
-                        'pos': other_agent.pos,
-                    })
+            if agent is not None:
+                if agent.name == other_agent.name:
+                    continue
+            all_agents.append({
+                    'name': other_agent.name,
+                    'num': other_agent.num,
+                    'pos': other_agent.pos,
+                })
         return all_agents
 
+    def get_all_pos_nodes(self, pos_node=None):
+        # logging.debug(f"[ENV]: get_all_pos_nodes")
+        # print(f"[ENV]: get_all_pos_nodes")
+        all_pos_nodes = []
+        # for i_pos_node in self.nodes:
+        #     if pos_node is not None:
+        #         if pos_node.xy_name == i_pos_node.xy_name:
+        #             continue
+        #     all_pos_nodes.append({
+        #         'name': i_pos_node.xy_name,
+        #     })
+        # logging.debug(f"[ENV]: finished get_all_pos_nodes")
+        return all_pos_nodes
+
     def get_observations(self):
+        print("[ENV] execute get_observations..")
+        # observations for agents
         observations = {
             agent.name: {
                 'name': agent.name,
@@ -153,11 +207,26 @@ class AsyncDcopMstEnv:
                 'nei_targets': self.get_nei_targets(agent),
                 'nei_agents': self.get_nei_agents(agent),
                 'all_agents': self.get_all_agents(agent),
+                'nei_pos_nodes': self.get_nei_pos_nodes(agent),
+                # 'all_pos_nodes': self.get_all_pos_nodes(),
                 'new_messages': self.mailbox[agent.name][self.step_count],
             }
             for agent in self.agents
         }
+        # observations for pos_nodes
+        for node in self.nodes:
+            observations[node.xy_name] = {
+                'name': node.xy_name,
+                'step_count': self.step_count,
+                'pos': node,
+                'nei_agents': self.get_pos_node_nei_agents(node),
+                'all_agents': self.get_all_agents(),
+                # 'all_pos_nodes': self.get_all_pos_nodes(node),
+                'new_messages': self.mailbox[node.xy_name][self.step_count],
+            }
+        # general info
         observations['step_count'] = self.step_count
+        logging.debug("[ENV] finished get_observations.")
         return observations
 
     def execute_move_order(self, agent, move_order):
@@ -212,12 +281,21 @@ class AsyncDcopMstEnv:
             MOVE ORDER: -1 - wait, 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
             SEND ORDER: message -> [(from, to, s_time, content), ...]
         """
-        # move agents + send messages
+        print('[ENV] execute step..')
+        # move agents + send agents' messages
+        print("[ENV] move agents + send agents' messages..")
         for agent in self.agents:
             move_order = actions[agent.name]['move']
             send_order = actions[agent.name]['send']
             self.execute_move_order(agent, move_order)
             self.execute_send_order(send_order)
+
+        # send pos_nodes' messages
+        print("[ENV] send pos_nodes' messages..")
+        for node in self.nodes:
+            if node.xy_name in actions:
+                send_order = actions[node.xy_name]['send']
+                self.execute_send_order(send_order)
 
         # update targets' data
         _ = [target.update_temp_req(self.agents) for target in self.targets]

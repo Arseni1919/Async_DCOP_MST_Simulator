@@ -15,9 +15,9 @@ def test_mst_alg(alg,
 
     info = {'plot_every': plot_every, 'max_steps': max_steps}
 
-    # map_dir = 'empty-48-48.map'  # 48-48
+    map_dir = 'empty-48-48.map'  # 48-48
     # map_dir = 'random-64-64-10.map'  # 64-64
-    map_dir = 'warehouse-10-20-10-2-1.map'  # 63-161
+    # map_dir = 'warehouse-10-20-10-2-1.map'  # 63-161
     # map_dir = 'lt_gallowstemplar_n.map'  # 180-251
 
     env = AsyncDcopMstEnv(
@@ -32,10 +32,10 @@ def test_mst_alg(alg,
 
         # <-- loop on algs
 
-        alg.create_entities(env.agents, env.targets)
+        alg.create_entities(env.agents, env.targets,  env.nodes)
 
         env.reset()
-        alg.reset(env.agents, env.targets)
+        alg.reset(env.agents, env.targets, env.nodes)
 
         # logs
         info['alg_name'] = alg.name
