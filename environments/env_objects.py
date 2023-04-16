@@ -125,6 +125,14 @@ class SimAgent:
         self.broken_pos = None
         self.broken_time = -1
 
+    def get_domain(self):
+        # domain = [self.pos.xy_name]
+        domain = []
+        domain.extend(self.pos.neighbours)
+        # if self.name == 'agent_5':
+        #     print()
+        return domain
+
     def clear_col_agents_list(self):
         self.col_agents_list = []
 

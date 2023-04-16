@@ -127,6 +127,7 @@ class AsyncDcopMstEnv:
                     'name': other_agent.name,
                     'num': other_agent.num,
                     'pos': other_agent.pos,
+                    'domain': other_agent.get_domain()
                 })
         return nei_agents
 
@@ -186,7 +187,7 @@ class AsyncDcopMstEnv:
         return all_pos_nodes
 
     def get_observations(self):
-        print("[ENV] execute get_observations..")
+        logging.debug("[ENV] execute get_observations..")
         # observations for agents
         observations = {
             agent.name: {
@@ -204,6 +205,7 @@ class AsyncDcopMstEnv:
                 'broken_pos': agent.broken_pos,
                 'broken_time': agent.broken_time,
                 'col_agents_list': agent.col_agents_list,
+                'domain': agent.get_domain(),
                 'nei_targets': self.get_nei_targets(agent),
                 'nei_agents': self.get_nei_agents(agent),
                 'all_agents': self.get_all_agents(agent),
@@ -281,9 +283,9 @@ class AsyncDcopMstEnv:
             MOVE ORDER: -1 - wait, 0 - stay, 1 - up, 2 - right, 3 - down, 4 - left
             SEND ORDER: message -> [(from, to, s_time, content), ...]
         """
-        print('[ENV] execute step..')
+        logging.debug('[ENV] execute step..')
         # move agents + send agents' messages
-        print("[ENV] move agents + send agents' messages..")
+        logging.debug("[ENV] move agents + send agents' messages..")
         for agent in self.agents:
             move_order = actions[agent.name]['move']
             send_order = actions[agent.name]['send']
@@ -291,7 +293,7 @@ class AsyncDcopMstEnv:
             self.execute_send_order(send_order)
 
         # send pos_nodes' messages
-        print("[ENV] send pos_nodes' messages..")
+        # print("[ENV] send pos_nodes' messages..")
         for node in self.nodes:
             if node.xy_name in actions:
                 send_order = actions[node.xy_name]['send']

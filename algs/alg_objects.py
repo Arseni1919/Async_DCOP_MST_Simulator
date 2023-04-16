@@ -23,9 +23,9 @@ class AlgAgent:
         self.nei_targets = None
         self.nei_agents = None
         self.all_agents = None
-        # TODO:
         self.nei_pos_nodes = None
         self.all_pos_nodes = None
+        self.domain = None
         self.mailbox = {}
 
     def observe(self, observation):
@@ -35,6 +35,7 @@ class AlgAgent:
         self.sr = observation.sr
         self.mr = observation.mr
         self.pos = observation.pos
+        self.domain = observation.domain
         self.start_pos = observation.start_pos
         self.prev_pos = observation.prev_pos
         self.next_pos = observation.next_pos
