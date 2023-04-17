@@ -168,42 +168,21 @@ class CamsAlgPosNode:
         messages = self.get_regular_send_order()
         return messages
 
-    def all_states_aligned(self):
-        for agent in self.nei_agents:
-            agent_name = agent['name']
-            state = self.beliefs[agent_name]['state']
-            small_iter = self.beliefs[agent_name]['small_iter']
-            if state != self.state:  #  or small_iter != self.small_iter
-                return False
-        return True
     # ------------------------------------ states ------------------------------------ #
 
     def state_first(self):
         self.reset_beliefs()
         self.dust = self.update_dust_weights()
-        self.state = 'plan'
+        self.state = 'response'
         self.small_iter = 0
         return []
 
-    def state_plan(self):
+    def state_response(self):
         if len(self.nei_agents) == 0:
             return []
-        self.state = 'f_plan'
         self.small_iter += 1
         self.sync_time = self.step_count
         send_order = self.get_plan_send_order()
-        return send_order
-
-    def state_f_plan(self):
-        if len(self.nei_agents) == 0:
-            return []
-        if self.all_states_aligned():
-            if self.small_iter > self.max_small_iterations:
-                self.small_iter = 0
-                self.dust = self.update_dust_weights()
-
-            self.state = 'plan'
-        send_order = self.get_regular_send_order()
         return send_order
 
     def process(self, observation):
@@ -213,11 +192,8 @@ class CamsAlgPosNode:
         if self.state == 'first':
             send_order = self.state_first()
 
-        elif self.state == 'plan':
-            send_order = self.state_plan()
-
-        elif self.state == 'f_plan':
-            send_order = self.state_f_plan()
+        elif self.state == 'response':
+            send_order = self.state_response()
 
         else:
             raise RuntimeError('unknown state')
@@ -259,20 +235,23 @@ class CamsAlgAgent(AlgAgent):
         self.max_small_iterations = max_small_iterations
         self.small_iter = 0
 
+    def reset_nei_pos_nodes_beliefs(self):
+        for nei_pos_node in self.nei_pos_nodes:
+            self.beliefs[nei_pos_node['name']] = {}
+        # self.beliefs = beliefs
+
     def reset_beliefs(self):
         all_entities = []
         all_entities.extend(self.all_agents)
-        all_entities.extend(self.nei_pos_nodes)
-        beliefs = {}
+        # all_entities.extend(self.nei_pos_nodes)
+        self.beliefs = {}
         for entity in all_entities:
             # create belief if this is new agent
-            beliefs[entity['name']] = {
+            self.beliefs[entity['name']] = {
                 'state': '',
                 'small_iter': None
             }
-        for nei_pos_node in self.nei_pos_nodes:
-            beliefs[nei_pos_node['name']]['weights'] = {}
-        self.beliefs = beliefs
+        self.reset_nei_pos_nodes_beliefs()
 
     def update_beliefs(self):
         """
@@ -390,6 +369,8 @@ class CamsAlgAgent(AlgAgent):
             self.next_cams_action = 404
             self.next_cams_pos = self.pos
 
+    # ------------------------------------ states ------------------------------------ #
+
     def all_agents_states_aligned(self):
         for agent in self.all_agents:
             agent_name = agent['name']
@@ -398,21 +379,19 @@ class CamsAlgAgent(AlgAgent):
                 return False
         return True
 
-    def all_states_aligned(self):
-        for agent in self.all_agents:
-            agent_name = agent['name']
-            state = self.beliefs[agent_name]['state']
-            if state != self.state:
-                return False
-        for nei_pos_node in self.nei_pos_nodes:
-            pos_node_name = nei_pos_node['name']
-            state = self.beliefs[pos_node_name]['state']
-            small_iter = self.beliefs[pos_node_name]['small_iter']
-            if state != self.state or small_iter != self.small_iter:
-                return False
-        return True
-
-    # ------------------------------------ states ------------------------------------ #
+    # def all_states_aligned(self):
+    #     for agent in self.all_agents:
+    #         agent_name = agent['name']
+    #         state = self.beliefs[agent_name]['state']
+    #         if state != self.state:
+    #             return False
+    #     for nei_pos_node in self.nei_pos_nodes:
+    #         pos_node_name = nei_pos_node['name']
+    #         state = self.beliefs[pos_node_name]['state']
+    #         small_iter = self.beliefs[pos_node_name]['small_iter']
+    #         if state != self.state or small_iter != self.small_iter:
+    #             return False
+    #     return True
 
     def state_first(self):
         self.reset_beliefs()
@@ -426,8 +405,8 @@ class CamsAlgAgent(AlgAgent):
         move_order = -1
         send_order = self.get_regular_send_order(show_next_pos=False)
         if self.all_agents_states_aligned():
-            self.reset_beliefs()
             self.sync_time = self.step_count
+            self.reset_nei_pos_nodes_beliefs()
             self.small_iter = 0
             self.state = 'plan'
         return move_order, send_order
@@ -448,7 +427,7 @@ class CamsAlgAgent(AlgAgent):
         return move_order, send_order
 
     def state_f_plan(self):
-        if self.all_states_aligned():
+        if self.all_agents_states_aligned():
             if self.small_iter < self.max_small_iterations:
                 self.state = 'plan'
             else:
@@ -553,11 +532,11 @@ class CamsAlg:
             actions[entity.name] = {'move': move_order, 'send': send_order}
             # if 'agent' in entity.name:  #  and entity.state == 'plan'
             #     print(f"{entity.name}'s state counter: {entity.state_counter}, state: {entity.state}, iter: {entity.small_iter}")
-        # for entity in self.all_entities:
-        #     if 'agent' in entity.name:
-        #         print(f"{entity.name}'s state counter: {entity.state_counter}, state: {entity.state}, iter: {entity.small_iter}")
-            # elif entity.is_with_nei():
-            #     print(f"{entity.name}'s state counter: {entity.state_counter}, state: {entity.state}, iter: {entity.small_iter}")
+        for entity in self.all_entities:
+            if 'agent' in entity.name:
+                print(f"{entity.name}'s state counter: {entity.state_counter}, state: {entity.state}, iter: {entity.small_iter}")
+            elif entity.is_with_nei():
+                print(f"{entity.name}'s state counter: {entity.state_counter}, state: {entity.state}, iter: {entity.small_iter}")
 
 
             # for target in self.sim_targets:
