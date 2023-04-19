@@ -1,5 +1,6 @@
 """
-TODO: - CAMS
+TODO: - ordered list for CAMS mailbox - process every message arrived
+TODO: - add CA function to CAMS before 'move' state
 TODO: graph for collisions
 TODO: graph for remained coverage requirement
 TODO: graph for amount of messages in the system per algorithm

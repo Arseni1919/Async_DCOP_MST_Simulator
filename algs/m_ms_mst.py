@@ -122,7 +122,8 @@ class MaxSumMstAlgAgent(AlgAgent):
         move_order = -1
         send_order = self.get_send_order(show_next_pos=False)
         if self.is_moving:
-
+            if self.is_broken:
+                raise RuntimeError()
             return move_order, send_order  # wait
         self.state_counter += 1
         self.state = 'f_move'

@@ -447,11 +447,6 @@ class CamsAlgAgent(AlgAgent):
         return -1, []
 
     def state_plan(self):
-        """
-        - agents and PosNodes exchange messages
-        - choose the best one if there are neighbours or choose the random one otherwise
-        """
-        # self.decide_next_possible_move()
         self.state = 'f_plan'
         move_order = -1
         self.sync_time = self.step_count
@@ -565,7 +560,7 @@ class CamsAlg:
     def reset(self, sim_agents, sim_targets, sim_nodes):
         self.create_entities(sim_agents, sim_targets, sim_nodes)
 
-    def to_print(self, to_print=True):
+    def to_print(self, to_print):
         if to_print:
             for entity in self.all_entities:
                 if 'agent' in entity.name:
