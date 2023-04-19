@@ -160,7 +160,7 @@ class MaxSumMstAlg:
         self.sim_agents, self.sim_targets = None, None
         self.with_breakdowns = with_breakdowns
 
-    def create_entities(self, sim_agents, sim_targets):
+    def create_entities(self, sim_agents, sim_targets, *args):
         self.sim_agents, self.sim_targets = sim_agents, sim_targets
         self.agents, self.agents_dict = [], {}
         for sim_agent in sim_agents:
@@ -168,7 +168,7 @@ class MaxSumMstAlg:
             self.agents.append(new_agent)
             self.agents_dict[new_agent.name] = new_agent
 
-    def reset(self, sim_agents, sim_targets):
+    def reset(self, sim_agents, sim_targets, *args):
         self.create_entities(sim_agents, sim_targets)
 
     def get_actions(self, observations):
@@ -189,8 +189,8 @@ class MaxSumMstAlg:
 
 
 def main():
-    # set_seed(random_seed_bool=False, i_seed=902)
-    set_seed(random_seed_bool=True)
+    set_seed(random_seed_bool=False, i_seed=191)
+    # set_seed(random_seed_bool=True)
 
     # alg = MaxSumMstAlg(with_breakdowns=False)
     alg = MaxSumMstAlg(with_breakdowns=True)
@@ -200,8 +200,8 @@ def main():
     # set_seed(True, 353)
     test_mst_alg(
         alg,
-        n_agents=30,
-        n_targets=30,
+        n_agents=10,
+        n_targets=10,
         to_render=True,
         plot_every=50,
         n_problems=3,
