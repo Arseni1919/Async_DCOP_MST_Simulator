@@ -1,4 +1,5 @@
 """
+TODO: bug in collision metrics - too many bugs
 TODO: - ordered list for CAMS mailbox - process every message arrived
 TODO: - add CA function to CAMS before 'move' state
 TODO: graph for collisions

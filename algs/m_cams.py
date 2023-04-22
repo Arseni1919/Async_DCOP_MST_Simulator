@@ -597,8 +597,8 @@ class CamsAlg:
 
 
 def main():
-    set_seed(random_seed_bool=False, i_seed=191)
-    # set_seed(random_seed_bool=True)
+    # set_seed(random_seed_bool=False, i_seed=191)
+    set_seed(random_seed_bool=True)
 
     # alg = CamsAlg()
     alg = CamsAlg(with_breakdowns=True)
